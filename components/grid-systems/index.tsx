@@ -1,199 +1,173 @@
 'use client';
 import _ from 'lodash';
 import dynamic from 'next/dynamic';
-import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 
 import { rebuilComponentMonaco } from '@/app/actions/use-constructor';
 import { CONFIGS } from '@/configs';
 import { componentRegistry } from '@/lib/slices';
-import { cn, convertStyle, getDeviceSize, setActive } from '@/lib/utils';
+import { getDeviceSize } from '@/lib/utils';
 import { useApiCallStore } from '@/providers';
-import { apiResourceStore } from '@/stores';
-import { GridItem } from '@/types/gridItem';
 import { dynamicGenarateUtil } from '@/uitls/dynamicGenarate';
 
 import NotFound from './404';
-import { GapGrid, GridRow, mapAlineItem, mapJustifyContent, SpanCol, SpanRow } from './const';
+import {
+  GapGrid,
+  GridItem,
+  GridRow,
+  mapAlineItem,
+  mapJustifyContent,
+  SpanCol,
+  SpanRow,
+} from './const';
 import LoadingPage from './loadingPage';
-import { CsContainerRenderSlice } from './styles';
 import { GridSystemProps, RenderGripProps } from './types';
 
-const componentHasAction = ['pagination', 'button', 'input_text'];
-const componentHasMenu = ['dropdown'];
+const componentHasAction = ['pagination'];
 const allowUpdateTitle = ['content'];
-type TRenderSlice = { slice: GridItem | null | undefined; idParent: string; isMenu?: boolean };
-const { updateTitleInText } = dynamicGenarateUtil;
-//#region Render Slice
-export const RenderSlice: React.FC<TRenderSlice> = ({ slice, isMenu }) => {
-  const pathname = usePathname();
+type TRenderSlice = { slice: GridItem | null | undefined; idParent: string };
+
+const RenderSlice: React.FC<TRenderSlice> = ({ slice }) => {
   const { apiData } = useApiCallStore((state) => state);
+  console.log('🚀 ~ apiData:', apiData);
+  const { updateTitleInText } = dynamicGenarateUtil;
   const [sliceRef, setSliceRef] = useState<GridItem | null | undefined>(slice);
 
   useEffect(() => {
+    console.log('RenderSlice apiData', apiData);
+
     if (
       sliceRef &&
-      sliceRef?.dynamicGenerate?.dataJsonPath &&
+      !_.isEmpty(sliceRef?.valueRender?.jsonPath) &&
       allowUpdateTitle.includes(sliceRef.type)
     ) {
-      const { apiCall } = sliceRef.dynamicGenerate || {};
+      const { apiCall } = sliceRef.valueRender || {};
       const valueJson = apiData.find((item) => item.id === apiCall?.id);
+      // Cập nhật tiêu đề cho content
       const title = updateTitleInText(sliceRef, valueJson?.data);
-      if (title !== sliceRef?.dataSlice?.title) {
-        setSliceRef((prev) => ({
-          ...prev,
-          dataSlice: { title: _.isArray(title) ? title[0] : title },
-          type: prev?.type || 'grid',
-        }));
-      }
+      console.log('🚀RenderSlice 2', { apiData, title });
+      // Cập nhật sliceRef với các card mới
+      setSliceRef((prev) => ({
+        ...prev,
+        dataSlice: { title: _.isArray(title) ? title[0] : title },
+        type: prev?.type || 'grid',
+      }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiData, slice, updateTitleInText]);
-
-  const key = sliceRef?.id?.split('$')[0];
-  const isButton = key === 'button';
+  }, [apiData]);
 
   const data = useMemo(() => {
+    const key = sliceRef?.id?.split('$')[0];
     return componentHasAction.includes(key!) ? sliceRef : _.get(sliceRef, 'dataSlice');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sliceRef]);
 
   const styleDevice: string = getDeviceSize() as string;
 
-  const SliceComponent = useMemo(() => {
-    return componentRegistry[key as keyof typeof componentRegistry];
-  }, [key]);
+  const key = sliceRef?.id?.split('$')[0];
+
+  const SliceComponent = componentRegistry[key as keyof typeof componentRegistry];
+
+  const isGrid = sliceRef?.type === 'grid' ? 'grid' : '';
+  const isFlexBox = sliceRef?.type === 'flex';
+  const isButton = key === 'button';
 
   const styleSlice = (_.get(sliceRef, [styleDevice]) as React.CSSProperties) || sliceRef?.style;
 
-  const sliceClasses = useMemo(() => {
-    if (!sliceRef) return '';
-    return [
-      sliceRef.colspan ? SpanCol(Number(sliceRef.colspan)) : '',
-      sliceRef.rowspan ? SpanRow(Number(sliceRef.rowspan)) : '',
-      sliceRef.rows ? GridRow(Number(sliceRef.rows)) : '',
-      sliceRef.gap ? GapGrid(Number(sliceRef.gap)) : '',
-      sliceRef.type === 'grid' ? 'grid' : '',
-      sliceRef.type === 'flex' && mapJustifyContent(sliceRef.justifyContent),
-      sliceRef.type === 'flex' && mapAlineItem(sliceRef.alignItems),
-      sliceRef.type === 'flex' && 'flex',
-    ]
-      .filter(Boolean)
-      .join(' ');
-  }, [sliceRef]);
+  const sliceClasses = [
+    sliceRef?.colspan ? SpanCol(Number(sliceRef.colspan)) : '',
+    sliceRef?.rowspan ? SpanRow(Number(sliceRef.rowspan)) : '',
+    sliceRef?.rows ? GridRow(Number(sliceRef.rows)) : '',
+    sliceRef?.gap ? GapGrid(Number(sliceRef.gap)) : '',
+    isGrid,
+    isFlexBox && mapJustifyContent(sliceRef?.justifyContent),
+    isFlexBox && mapAlineItem(sliceRef?.alignItems),
+    isFlexBox && 'flex',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
-  const inlineStyles = useMemo(() => {
-    if (!sliceRef) return {};
-    const styleSlice = (_.get(sliceRef, [styleDevice]) as React.CSSProperties) || sliceRef.style;
-    return {
-      gridTemplateColumns: sliceRef.type === 'grid' ? `repeat(${sliceRef.columns}, 1fr)` : '',
-      ...styleSlice,
-    };
-  }, [sliceRef, styleDevice]);
+  const inlineStyles: React.CSSProperties = {
+    ...(styleSlice || {}),
+    gridTemplateColumns: isGrid
+      ? `repeat(${Math.min(
+          parseInt(sliceRef?.columns || '1'),
+          sliceRef?.childs?.length ?? 0
+        )}, 1fr)`
+      : '',
+  };
 
   const content = SliceComponent ? (
-    <SliceComponent
-      id={_.get(sliceRef, 'id')}
-      style={isButton ? styleSlice : convertStyle(styleSlice)}
-      data={sliceRef}
-      childs={sliceRef?.childs}
-    />
+    <SliceComponent style={styleSlice} data={data} />
   ) : (
     sliceRef?.childs && (
       <RenderGrid items={sliceRef.childs} idParent={sliceRef.id!} slice={sliceRef} />
     )
   );
-
-  const isMemuConvert = isMenu || componentHasMenu.includes(key || '');
-  const isActive = setActive({ isMenu: isMemuConvert, data, cleanedPath: pathname });
+  if (!isButton) {
+  }
 
   return sliceClasses || Object.keys(inlineStyles).length ? (
-    <CsContainerRenderSlice
-      className={`${sliceClasses} ${_.get(styleSlice, 'className', '')} `}
-      style={!isButton ? inlineStyles : {}}
-      is-active={!!isActive == true ? 'true' : 'false'}
-      styledComponentCss={!isButton ? sliceRef?.styledComponentCss : ''}
-    >
+    <div className={`${sliceClasses}`} style={isButton ? {} : inlineStyles} id={sliceRef?.id}>
       {content}
-    </CsContainerRenderSlice>
+    </div>
   ) : null;
 };
 
-//#region Render Grid
 export const RenderGrid: React.FC<RenderGripProps> = ({ idParent, slice }) => {
   const { apiData, addApiData } = useApiCallStore((state) => state);
-  const [childs, setChilds] = useState<GridItem[]>(slice?.childs || []);
-  const [isLoading, setIsLoading] = useState(false);
-  const pathname = usePathname();
-  console.log('🚀 ~ pathname:', pathname.slice(1));
-
-  const searchParams = useSearchParams();
-  const uid = searchParams.get('uid');
+  const [sliceRef, setSliceRef] = useState<GridItem | null | undefined>(slice);
   const { createCardsFromApi, getDataFromApi } = dynamicGenarateUtil;
-  const { findApiResourceValue } = apiResourceStore();
-
-  const apiCallId = slice?.dynamicGenerate?.apiCall?.id;
 
   useEffect(() => {
-    if (!apiCallId) return;
+    console.log('RenderGrid', apiData);
+  }, [apiData]);
+  useEffect(() => {
+    if (!sliceRef) return;
 
     const fetchData = async () => {
-      setIsLoading(true);
+      // Hàm cập nhật tiêu đề cho text hoặc description
 
       try {
-        const { apiCall, dataJsonPath } = slice.dynamicGenerate ?? {};
-        console.log('🚀 ~ fetchData ~ apiCall:', apiCall);
-        const apiResource = findApiResourceValue(apiCall?.id || '');
-        console.log('🚀 ~ fetchData ~ apiResource:', apiResource);
+        if (!sliceRef?.valueRender?.apiCall?.id) return;
 
-        if (!apiResource) {
-          setIsLoading(false);
-
-          return;
+        const { apiCall, jsonPath } = sliceRef.valueRender;
+        let result = null;
+        if (sliceRef.valueRender.allowDynamicGenerate) {
+          const {
+            apiCall: { id },
+          } = sliceRef.valueRender;
+          result = await getDataFromApi(apiData, idParent, apiCall);
+          if (!_.isEmpty(result)) {
+            addApiData({ id, data: result, idParent });
+          }
+          console.log('🚀RenderGrid 1');
+          const newCards = createCardsFromApi(sliceRef, result, jsonPath ?? '');
+          console.log('🚀 ~ fetchData ~ newCards:', newCards);
+          setSliceRef((prev) => ({
+            ...prev,
+            childs: newCards as GridItem[],
+            type: prev?.type || 'grid',
+          }));
         }
-
-        const result = await getDataFromApi(apiData, idParent, apiResource);
-        console.log('🚀 ~ fetchData ~ result:', result);
-
-        if (!_.isEmpty(result)) {
-          addApiData({ id: apiCall?.id ?? '', data: result, idParent });
-        }
-
-        // Create new childs from API data
-        const newCards = createCardsFromApi(slice, result, dataJsonPath ?? '');
-        console.log('🚀 ~ fetchData ~ newCards:', newCards);
-        setChilds(newCards as GridItem[]);
       } catch (error) {
         console.error('Error fetching API data:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiCallId, uid, idParent, slice]);
-
-  // Memoize the rendered children to avoid unnecessary re-renders
-  const renderedChildren = useMemo(() => {
-    return _.map(childs, (child, index) => (
-      <RenderSlice slice={child} key={index} idParent={idParent} />
-    ));
-  }, [childs, idParent]);
-
-  if (isLoading) {
-    return <LoadingPage />;
-  }
-
-  return <>{renderedChildren}</>;
+  }, []);
+  return (
+    <>
+      {_.map(sliceRef?.childs, (slice, index) => (
+        <RenderSlice slice={slice} key={index} idParent={idParent} />
+      ))}
+    </>
+  );
 };
 
-//#region Grid System
-const GridSystemContainer = ({ page, deviceType, isBody, isHeader, isFooter }: GridSystemProps) => {
+const GridSystemContainer = ({ page, deviceType }: GridSystemProps) => {
   const [layout, setLayout] = useState<GridItem | null>(null);
-
-  const styleDevice: string = getDeviceSize() as string;
 
   const config = layout || page;
   const [refreshKey, setRefreshKey] = useState(0);
@@ -208,20 +182,15 @@ const GridSystemContainer = ({ page, deviceType, isBody, isHeader, isFooter }: G
   }, [refreshKey]); // ✅
 
   const content = (
-    <>
+    <div className="mx-auto flex justify-center">
       {config?.childs ? (
-        <CsContainerRenderSlice
-          className="w-full flex flex-col justify-center flex-wrap"
-          id={config.id}
-          style={_.get(config, [styleDevice]) as React.CSSProperties}
-          styledComponentCss={config?.styledComponentCss}
-        >
+        <div className="w-full flex flex-col justify-center flex-wrap overflow-auto" id={config.id}>
           <RenderGrid items={config.childs} idParent={config.id!} slice={config} />
-        </CsContainerRenderSlice>
+        </div>
       ) : (
         <NotFound />
       )}
-    </>
+    </div>
   );
 
   useEffect(() => {
@@ -250,14 +219,7 @@ const GridSystemContainer = ({ page, deviceType, isBody, isHeader, isFooter }: G
   }
 
   return (
-    <div
-      className={cn(
-        '',
-        isBody ? 'z-1 min-h-screen' : '',
-        isHeader ? 'z-3 fixed w-full top-0' : '',
-        isFooter ? 'z-3' : ''
-      )}
-    >
+    <div className="overflow-hidden">
       <MonacoContainerRoot key={refreshKey}>{content}</MonacoContainerRoot>
     </div>
   );

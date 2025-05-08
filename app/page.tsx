@@ -1,16 +1,17 @@
 import { Fragment } from 'react';
-import { Metadata } from 'next';
-import _ from 'lodash';
-import Head from 'next/head';
-
+import { redirect } from 'next/navigation';
 import ClientWrapper from '@/components/grid-systems/ClientWrapGridSystem';
+import Head from 'next/head';
+import _ from 'lodash';
 import { fetchMetadata } from './actions/server';
+import { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 const pageName = 'home';
 
 export default async function Home() {
+  redirect('/support');
   const layoutId = pageName;
   const metadata = await fetchMetadata(pageName);
   const formMetadata = _.get(metadata, 'data.form');

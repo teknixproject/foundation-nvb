@@ -1,16 +1,13 @@
 import _ from 'lodash';
 import { CSSProperties } from 'react';
 
-import { GridItem } from '@/types/gridItem';
-import styled, { css } from 'styled-components';
-
 interface ImageProps {
-  data?: GridItem;
+  data?: any;
   style?: CSSProperties;
 }
 
 const Image = ({ data, style }: ImageProps) => {
-  const url = _.get(data, 'dataSlice.url', '/default-bg.png');
+  const url = _.get(data, 'url', '/default-bg.png');
 
   const newStyle: CSSProperties = {
     ...style,
@@ -31,13 +28,7 @@ const Image = ({ data, style }: ImageProps) => {
       style={{ width: '100%', height: '100%' }}
       className="relative overflow-hidden flex items-center justify-center"
     >
-      <CsImg
-        style={newStyle}
-        src={url}
-        alt="Image"
-        className="w-full h-full object-cover"
-        styledComponentCss={data?.styledComponentCss}
-      />
+      <img style={newStyle} src={url} alt="Image" className="w-full h-auto object-cover" />
       {isBg && (
         <div
           className="absolute inset-0 pointer-events-none"
@@ -49,22 +40,5 @@ const Image = ({ data, style }: ImageProps) => {
     </div>
   );
 };
-
-interface StylesProps {
-  style?: {
-    hover?: CSSProperties;
-    [key: string]: any;
-  };
-  styledComponentCss?: string;
-}
-
-const CsImg = styled.img<StylesProps>`
-  ${(props) =>
-    props.styledComponentCss
-      ? css`
-          ${props.styledComponentCss}
-        `
-      : ''}
-`;
 
 export default Image;

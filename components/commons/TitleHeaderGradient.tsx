@@ -1,17 +1,22 @@
-import { CSSProperties } from 'react';
+import { getDeviceType } from "@/lib/utils";
+import _ from "lodash";
+import { CSSProperties } from "react";
 
-import { useData } from '@/hooks';
-import { getDeviceType } from '@/lib/utils';
-
-const TitleHeaderGradient = ({ data, style }: { data?: any; style?: CSSProperties }) => {
+const TitleHeaderGradient = ({
+  data,
+  style,
+}: {
+  data?: any;
+  style?: CSSProperties;
+}) => {
   const deviceType = getDeviceType();
-  const isMobile = deviceType === 'mobile';
+  const isMobile = deviceType === "mobile";
 
-  const { title } = useData({ layoutData: data, defaultTitle: 'Title Header Gradient' });
+  const text = _.get(data, "title", "Title Header Gradient");
 
   const newStyle = {
-    letterSpacing: isMobile ? '0.1px' : '',
-    lineHeight: '170%',
+    letterSpacing: isMobile ? "0.1px" : "",
+    lineHeight: "170%",
     ...style,
   };
 
@@ -20,7 +25,7 @@ const TitleHeaderGradient = ({ data, style }: { data?: any; style?: CSSPropertie
       style={newStyle}
       className="heading-1 flex items-center gap-3 text-title-gradient max-lg:inline"
     >
-      {title}
+      {text}
     </h2>
   );
 };

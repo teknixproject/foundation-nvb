@@ -3,29 +3,28 @@ import { JSONPath } from 'jsonpath-plus';
 import _ from 'lodash';
 
 import { TApiData } from '@/stores';
-import { TApiCallValue } from '@/types';
-import { GridItem } from '@/types/gridItem';
+
+import { GridItem, ValueRender } from '../components/grid-systems/const';
 
 const allowTypeGenerate = ['flex', 'grid'];
 // Hàm lấy dữ liệu từ API hoặc store
-const getDataFromApi = async (apiData: TApiData[], idParent: string, apiCall: TApiCallValue) => {
-  try {
-    const existingApiData = apiData.find((item: any) => item.id === apiCall?.apiId);
-    if (!_.isEmpty(existingApiData)) return existingApiData.data;
+const getDataFromApi = async (
+  apiData: TApiData[],
+  idParent: string,
+  apiCall: Pick<ValueRender, 'apiCall'>['apiCall']
+) => {
+  const existingApiData = apiData.find(
+    (item: any) => item.id === apiCall?.id || item.idParent === idParent
+  );
+  if (!_.isEmpty(existingApiData)) return existingApiData.data;
 
-    const response = await axios.request({
-      url: apiCall?.url,
-      method: apiCall?.method.toLowerCase(),
-      params: apiCall?.query,
-      headers: apiCall?.headers,
-    });
-    const data = response.data;
+  const response = await axios.request({
+    url: apiCall?.url,
+    method: apiCall?.method.toLowerCase(),
+  });
+  const data = response.data;
 
-    return data;
-  } catch (error) {
-    console.log('🚀 ~ getDataFromApi ~ error:', error);
-    return null;
-  }
+  return data;
 };
 
 // Hàm cập nhật jsonPath theo index của card
@@ -33,31 +32,28 @@ const updateJsonPath = (jsonPath: string, index: number) => {
   return _.replace(jsonPath, /\[\d*\]/, `[${index}]`);
 };
 
-const updateJsonPathForChild = (slice: GridItem, index: number, source: any) => {
-  const jsonPath = updateJsonPath(slice.dynamicGenerate?.dataJsonPath ?? '', index);
-  const title = JSONPath({ path: jsonPath!, json: source })[0];
-  const updateSlide: GridItem = {
+const updateJsonPathForChild = (slice: GridItem, index: number) => {
+  const updateSlide = {
     ...slice,
-    id: `${slice.id}_${index}`,
-    dataSlice: {
-      title,
-    },
-    dynamicGenerate: {
-      ...slice?.dynamicGenerate,
-      dataJsonPath: updateJsonPath(slice.dynamicGenerate?.dataJsonPath ?? '', index),
+    valueRender: {
+      ...slice.valueRender,
+      jsonPath: updateJsonPath(slice.valueRender?.jsonPath ?? '', index),
     },
   };
   const childs = updateSlide.childs;
 
   if (!childs?.length) return updateSlide;
 
-  const updateChilds = childs.map((child) => updateJsonPathForChild(child, index, source));
+  const updateChilds = childs.map((child) => updateJsonPathForChild(child, index));
   updateSlide.childs = updateChilds;
 
   return updateSlide;
 };
 // Hàm tạo các card từ dữ liệu API
 const createCardsFromApi = (sliceRef: GridItem, apiData: any, jsonPath: string) => {
+  if (!allowTypeGenerate.includes(sliceRef.type) || !sliceRef.valueRender?.allowDynamicGenerate) {
+    return sliceRef.childs;
+  }
   let apiDataHaveJsonPath = apiData;
   if (jsonPath) {
     apiDataHaveJsonPath = JSONPath({ json: apiData, path: jsonPath })[0];
@@ -71,18 +67,15 @@ const createCardsFromApi = (sliceRef: GridItem, apiData: any, jsonPath: string) 
 
   const newCards = _.flatMap(_.range(apiDataHaveJsonPath.length), (index) =>
     _.map(childs, (value: GridItem) => {
-      const newChild: GridItem = {
+      const newChild = {
         ...value,
-        id: `${value.id}_${index}`,
-        // dynamicGenerate: {
-        //   ...(value.dynamicGenerate ?? {}),
-        //   dataJsonPath: updateJsonPath(value.dynamicGenerate?.dataJsonPath ?? '', index),
-        // },
+        valueRender: {
+          ...(value.valueRender ?? {}),
+          index,
+        },
       };
       if (newChild?.childs?.length) {
-        newChild.childs = newChild.childs.map((child) =>
-          updateJsonPathForChild(child, index, apiData)
-        );
+        newChild.childs = newChild.childs.map((child) => updateJsonPathForChild(child, index));
       }
 
       return newChild;
@@ -93,9 +86,9 @@ const createCardsFromApi = (sliceRef: GridItem, apiData: any, jsonPath: string) 
 };
 
 const updateTitleInText = (sliceRef: GridItem, result: any): string | undefined => {
-  if (!sliceRef?.dynamicGenerate?.dataJsonPath) return;
+  if (!sliceRef?.valueRender?.jsonPath) return;
 
-  const jsonPath = sliceRef?.dynamicGenerate?.dataJsonPath;
+  const jsonPath = sliceRef.valueRender?.jsonPath;
   // console.log(`🚀 ~ updateTitleInText ~ jsonPath: ${sliceRef.id}`, jsonPath);
 
   if (_.isEmpty(jsonPath)) return;

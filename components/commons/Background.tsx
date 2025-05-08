@@ -1,47 +1,37 @@
 'use client';
 
+import { getDeviceType } from '@/lib/utils';
 import { CSSProperties, useMemo } from 'react';
 
-import { GridItem } from '@/types/gridItem';
-import _ from 'lodash';
-import styled, { css } from 'styled-components';
-
 interface BackgroundCompoProps {
-  data?: GridItem;
+  data?: { url?: string };
   style?: CSSProperties;
 }
 
 const BackgroundCompo = ({ data, style }: BackgroundCompoProps) => {
   const defaultUrl = '/default-bg.png';
-  const url = data?.dataSlice?.url || defaultUrl;
+  const url = data?.url || defaultUrl;
+
+  const sizeScreen = getDeviceType();
+  const isMobile = sizeScreen === 'mobile';
 
   const computedStyle: CSSProperties = useMemo(
     () => ({
       ...style,
       inset: 0,
-      objectFit: _.get(style, 'objectFit') || 'fill',
-      height: '100%',
+      objectFit: 'cover',
+      height: isMobile ? '100%' : 'auto',
     }),
-    [style]
+    [style, isMobile]
   );
 
   return (
-    <Container
-      id="background-compo"
-      style={computedStyle}
-      styledComponentCss={data?.styledComponentCss}
-    >
+    <div id="background-compo">
       {url ? (
         url.match(/\.(jpeg|jpg|gif|png|svg|webp)$/i) ? (
-          <CsImg
-            style={computedStyle}
-            src={url}
-            alt="Preview"
-            className="w-full"
-            styledComponentCss={data?.styledComponentCss}
-          />
+          <img style={computedStyle} src={url} alt="Preview" className="w-full" />
         ) : url.match(/\.(mp4|mov|avi|mkv|webm)$/i) ? (
-          <CsVideo
+          <video
             style={computedStyle}
             autoPlay
             loop
@@ -50,52 +40,16 @@ const BackgroundCompo = ({ data, style }: BackgroundCompoProps) => {
             className="w-full aspect-video"
             src={url}
             preload="metadata"
-            styledComponentCss={data?.styledComponentCss}
           >
             <source src={`${url}.webm`} type="video/webm" />
             <source src={url} type="video/mp4" />
-          </CsVideo>
+          </video>
         ) : (
           <p>Unsupported media type</p>
         )
       ) : null}
-    </Container>
+    </div>
   );
 };
-
-interface StylesProps {
-  style?: {
-    hover?: CSSProperties;
-    [key: string]: any;
-  };
-  styledComponentCss?: string;
-}
-
-const Container = styled.div<StylesProps>`
-  ${(props) =>
-    props.styledComponentCss
-      ? css`
-          ${props.styledComponentCss}
-        `
-      : ''}
-`;
-
-const CsImg = styled.img<StylesProps>`
-  ${(props) =>
-    props.styledComponentCss
-      ? css`
-          ${props.styledComponentCss}
-        `
-      : ''}
-`;
-
-const CsVideo = styled.video<StylesProps>`
-  ${(props) =>
-    props.styledComponentCss
-      ? css`
-          ${props.styledComponentCss}
-        `
-      : ''}
-`;
 
 export default BackgroundCompo;

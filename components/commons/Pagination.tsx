@@ -5,22 +5,21 @@ import _ from 'lodash';
 import queryString from 'query-string';
 import React, { useEffect, useState } from 'react';
 import { CSSProperties } from 'styled-components';
-  console.log();
 
-import { usePagination } from '@/hooks/usePagination';
+import { usePagination } from '@/app/actions/commons/usePagination';
 import { useApiCallStore } from '@/providers';
-import { GridItem } from '@/types/gridItem';
 import { Icon } from '@iconify/react'; // Import Iconify for better icons
 
-import Loading from './Loading';
+import { GridItem } from '../grid-systems/const';
+import Loading from './loading';
 
 type TProps = {
   data?: GridItem;
   style?: CSSProperties;
 };
-console.log();
 
 const Pagination: React.FC<TProps> = ({ style, data }) => {
+  console.log('🚀 Pagination~ data:', data);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1000);
   const { apiData, findApiData } = useApiCallStore((state) => state);
@@ -66,7 +65,6 @@ const Pagination: React.FC<TProps> = ({ style, data }) => {
       }
     };
     getData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   // Generate page numbers with ellipsis
@@ -91,7 +89,6 @@ const Pagination: React.FC<TProps> = ({ style, data }) => {
 
     setTotalPages(totalValue);
     // Add totalPages logic here if needed
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiData, data, findApiData]);
 
   return (

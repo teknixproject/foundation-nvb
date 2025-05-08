@@ -1,21 +1,16 @@
-// import { Content } from '@prismicio/client';
+import { Content } from '@prismicio/client';
 
-import { GridItem } from "@/types/gridItem";
+import { GridItem } from './const';
 
-// import { GridItem } from './const';
-
-export interface GridSystemProps {
+export interface GridSystemProps extends Content.PageDocument, Content.PageDocumentData {
   page?: GridItem;
   layoutId?: string;
   deviceType: string;
-  isHeader?: boolean;
-  isBody?: boolean;
-  isFooter?: boolean;
 }
 
-// export type SliceItemsType =
-//   | Content.PageDocumentDataSlicesSlice
-//   | Content.PageDocumentDataSlicesSlice;
+export type SliceItemsType =
+  | Content.PageDocumentDataSlicesSlice
+  | Content.PageDocumentDataSlicesSlice;
 
 export type RenderGripProps = {
   items: GridItem[];

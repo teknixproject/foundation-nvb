@@ -9,8 +9,6 @@ import {
 import _ from 'lodash';
 import React, { useEffect, useRef } from 'react';
 
-// import {useData} from "../../../hooks"
-
 const SandPackUI = ({ dataPreviewUI }: { dataPreviewUI: any }) => {
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -18,63 +16,52 @@ const SandPackUI = ({ dataPreviewUI }: { dataPreviewUI: any }) => {
     const iframe = previewRef.current?.querySelector('iframe');
     if (!iframe) return;
 
-    // const handleLoad = () => {
-    //   const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
-    //   if (!iframeDoc) return;
+    const handleLoad = () => {
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) return;
 
-    //   const style = iframeDoc.createElement('style');
-    //   style.innerHTML = `
-    //     body {
-    //       margin: 0 !important;
-    //       padding: 0 !important;
-    //       min-height: 100vh !important;
-    //       display: flex !important;
-    //       justify-content: center !important;
-    //       align-items: center !important;
-    //     }
+      const style = iframeDoc.createElement('style');
+      style.innerHTML = `
+        body {
+          margin: 0 !important;
+          padding: 0 !important;
+          min-height: 100vh !important;
+          display: flex !important;
+          justify-content: center !important;
+          align-items: center !important;
+        }
+        
+        /* Nếu muốn căn giữa một container cụ thể */
+        .your-container {
+          width: 100%;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+      `;
 
-    //     /* Nếu muốn căn giữa một container cụ thể */
-    //     .your-container {
-    //       width: 100%;
-    //       max-width: 1200px;
-    //       margin: 0 auto;
-    //     }
-    //   `;
+      iframeDoc.head.appendChild(style);
 
-    //   iframeDoc.head.appendChild(style);
+      const observer = new MutationObserver(() => {
+        const body = iframeDoc.body;
+        if (body) {
+          body.style.display = 'flex';
+          body.style.justifyContent = 'center';
+          body.style.alignItems = 'center';
+        }
+      });
 
-    //   const observer = new MutationObserver(() => {
-    //     const body = iframeDoc.body;
-    //     if (body) {
-    //       body.style.display = 'flex';
-    //       body.style.justifyContent = 'center';
-    //       body.style.alignItems = 'center';
-    //     }
-    //   });
+      observer.observe(iframeDoc.documentElement, {
+        childList: true,
+        subtree: true,
+      });
 
-    //   observer.observe(iframeDoc.documentElement, {
-    //     childList: true,
-    //     subtree: true,
-    //   });
-
-    //   return () => observer.disconnect();
-    // };
-
-    // iframe.addEventListener('load', handleLoad);
-
-    // return () => {
-    //   iframe.removeEventListener('load', handleLoad);
-    // };
-
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== 'http://expected-origin.com') return; // Thay bằng origin của iframe
-      console.log('Message from iframe:', event.data);
+      return () => observer.disconnect();
     };
 
-    window.addEventListener('message', handleMessage);
+    iframe.addEventListener('load', handleLoad);
 
     return () => {
-      window.removeEventListener('message', handleMessage);
+      iframe.removeEventListener('load', handleLoad);
     };
   }, []);
 
@@ -92,8 +79,6 @@ const SandPackUI = ({ dataPreviewUI }: { dataPreviewUI: any }) => {
           tailwindcss: 'latest',
           postcss: 'latest',
           autoprefixer: 'latest',
-          'styled-components': '^5.3.11', // Thêm styled-components
-          '@types/styled-components': '^5.1.26', // Thêm @types/styled-components nếu dùng TypeScript
         },
         environment: 'create-react-app',
       }}
@@ -111,7 +96,7 @@ const SandPackUI = ({ dataPreviewUI }: { dataPreviewUI: any }) => {
             }
           `,
         },
-        '/PreviewComponent.tsx': _.get(dataPreviewUI, 'previewData', ''),
+        '/PreviewComponent.tsx': _.get(dataPreviewUI, 'data.previewData', ''),
         '/tailwind.css': {
           code: `
             @tailwind base;
@@ -140,8 +125,6 @@ const SandPackUI = ({ dataPreviewUI }: { dataPreviewUI: any }) => {
                 tailwindcss: 'latest',
                 postcss: 'latest',
                 autoprefixer: 'latest',
-                'styled-components': '^5.3.11', // Thêm styled-components
-                '@types/styled-components': '^5.1.26', // Thêm @types/styled-components nếu dùng TypeScript
               },
               browserslist: {
                 production: ['>0.2%', 'not dead', 'not op_mini all'],

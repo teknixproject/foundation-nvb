@@ -10,13 +10,13 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
-export function useConstructorDataAPI(_documentId?: string, pageName?: string) {
+export function useConstructorDataAPI(documentId?: string, pageName?: string) {
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
-  const prevComponentRef = useRef<string | null>(null);
+  const prevComponentRef = useRef<string | null>(null); // Lưu component trước đó
 
   const { data, error } = useSWR(
     pageName
-      ? `${API_URL}/api/client/getLayout?pId=${process.env.NEXT_PUBLIC_PROJECT_ID}&uid=${pageName}`
+      ? `${API_URL}/api/layoutAndComponent?pId=${process.env.NEXT_PUBLIC_PROJECT_ID}&uid=${pageName}`
       : null,
     fetcher,
     { revalidateOnFocus: false, refreshInterval: 60000 }
@@ -27,32 +27,29 @@ export function useConstructorDataAPI(_documentId?: string, pageName?: string) {
     return { layout: {}, component: {}, isLoading: false };
   }
 
-  if (!data) {
+  if (!data) return { layout: {}, component: {}, isLoading: true };
+
+  // 🔥 Kiểm tra component string có hợp lệ không
+  const componentString = data?.componentConfig?.component?.trim();
+  if (!componentString || typeof componentString !== 'string') {
+    console.error('❌ Error: componentString is missing or invalid.');
     return {
-      headerLayout: {},
-      bodyLayout: {},
-      footerLayout: {},
+      layout: _.get(data, 'layoutJson.layoutJson', {}),
       component: {},
-      isLoading: true,
+      isLoading: false,
     };
   }
 
-  const componentString = data?.componentConfig?.component?.trim() || '';
-  const isValidComponent = typeof componentString === 'string' && componentString;
-
-  if (!isValidComponent) {
-    console.error('❌ Error: componentString is missing or invalid.');
-  } else if (componentString !== prevComponentRef.current) {
+  // 🔥 Chỉ rebuild component nếu componentString thay đổi
+  if (componentString !== prevComponentRef.current) {
     console.log('🔄 Rebuilding component...');
     rebuilComponentMonaco(componentString);
     prevComponentRef.current = componentString;
   }
 
   return {
-    headerLayout: _.get(data, 'headerLayout.layoutJson', {}),
-    bodyLayout: _.get(data, 'bodyLayout.layoutJson', {}),
-    footerLayout: _.get(data, 'footerLayout.layoutJson', {}),
-    component: isValidComponent ? componentString : {},
+    layout: _.get(data, 'layoutJson.layoutJson', {}),
+    component: componentString,
     isLoading: false,
   };
 }
@@ -78,11 +75,11 @@ export async function rebuilComponentMonaco(componentString: string) {
   }
 }
 
-export function usePreviewUI(projectId?: string, uid?: string | null, sectionName?: string | null) {
+export function usePreviewUI(projectId?: string) {
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const { data: dataPreviewUI } = useSWR(
-    projectId ? `${API_URL}/api/preview-ui?projectId=${projectId}&uid=${uid}&sectionName=${sectionName}` : null,
+    projectId ? `${API_URL}/api/preview-ui?projectId=${projectId}` : null,
     fetcher,
     { revalidateOnFocus: false, refreshInterval: 60000 }
   );

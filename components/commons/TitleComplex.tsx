@@ -1,21 +1,19 @@
-import _ from 'lodash';
-import { CSSProperties } from 'react';
-import styled from 'styled-components';
-
-import { GridItem } from '@/types/gridItem';
+import _ from "lodash";
+import { CSSProperties } from "react";
+import styled from "styled-components";
 
 interface TitleComplexCompoProps {
-  data?: GridItem;
+  data?: any;
   style?: CSSProperties;
 }
 
 const TitleComplexCompo = ({ data, style }: TitleComplexCompoProps) => {
-  const titles = _.get(data, 'dataSlice.titles', {});
+  const titles = _.get(data, "titles", {});
 
   return (
     <h2
       style={{
-        display: 'inline',
+        display: "inline",
         ...style,
       }}
     >
@@ -28,12 +26,12 @@ const TitleComplexCompo = ({ data, style }: TitleComplexCompoProps) => {
             style={{
               color: titles[key].color,
               flexShrink: 0,
-              fontWeight: 'normal',
+              fontWeight: "normal",
               ...style,
             }}
             gradient={titles[key].gradient}
           >
-            {titles[key]?.text || ''}
+            {titles[key]?.text || ""}
           </CsStrong>
         ) : (
           titles[key]?.text
@@ -52,7 +50,7 @@ const CsStrong = styled.strong<{ gradient?: string }>`
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     `
-      : ''}
+      : ""}
 `;
 
 export default TitleComplexCompo;
