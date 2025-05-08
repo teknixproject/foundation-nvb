@@ -31,7 +31,13 @@ const PrivacyPolicy = () => {
             agree to the collection and use of information in accordance with this Privacy Policy.
             This Privacy Policy has been created with the help of the{' '}
             <strong className="text-[#1E1EFF] text-lg font-normal">
-              Free Privacy Policy Generator
+              <a
+                href="https://www.freeprivacypolicy.com/live/af8a58b3-8efe-4c6f-a0d5-a891dc714498"
+                className="text-blue-600"
+              >
+                Free Privacy Policy Generator
+              </a>
+              {/* Free Privacy Policy Generator */}
             </strong>
             .
           </p>
