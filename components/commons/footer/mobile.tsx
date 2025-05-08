@@ -34,9 +34,9 @@ function FooterMobile() {
     <footer className="bg-white relative overflow-hidden">
       <Container className="main:!px-[70px] py-16">
         <div className="w-full flex items-center justify-between max-lg:flex-col max-lg:gap-y-10">
-          <div className="">
+          {/* <div className="">
             <Image width={73} height={32} src="/assets/images/LogoTBK.png" alt="Logo" />
-          </div>
+          </div> */}
           <div className="w-[343px] h-[69px] flex-col justify-start items-start gap-2 inline-flex">
             <div className="self-stretch text-center text-stone-950 text-base font-medium font-['Poppins'] leading-tight">
               Hãy để lại địa chỉ liên lạc!

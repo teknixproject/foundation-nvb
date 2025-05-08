@@ -37,7 +37,7 @@ const MenuMobile = ({ className }: { className: string }) => {
           className="w-[80%] h-full text-white rounded-lg shadow-lg  backdrop-blur-[16px] p-4"
           onClick={(e) => e.stopPropagation()}
         >
-          <div
+          {/* <div
             onClick={toggleOpen}
             className="flex justify-start cursor-pointer"
           >
@@ -47,7 +47,7 @@ const MenuMobile = ({ className }: { className: string }) => {
               width={24}
               height={24}
             />
-          </div>
+          </div> */}
           <div className="flex flex-col items-center gap-4">
             {_.map(components, (comp) => (
               <Link

@@ -100,10 +100,10 @@ function Footer() {
           </div>
         </div>
       </Container>
-      <Container className="main:!px-[70px] py-2 z-10">
+      <Container className="main:!px-[70px] py-2 z-10 pb-8">
         <div className="flex items-center justify-between">
           <Link href={'/'} className="flex items-center gap-2">
-            <Image alt="logo" src={'/assets/images/LogoTBK.png'} width={110} height={48} />
+            {/* <Image alt="logo" src={'/assets/images/LogoTBK.png'} width={110} height={48} /> */}
           </Link>
           <div className="flex items-center gap-6">
             <Link

@@ -71,7 +71,7 @@ function Header() {
       <Container>
         <div className="w-full flex items-center justify-between h-header max-lg:flex-col max-lg:justify-center max-lg:gap-2">
           <MenuMobile className="max-lg:absolute max-lg:left-4" />
-          <Link href="/" className="flex items-center gap-2 max-lg:justify-center max-lg:w-full">
+          {/* <Link href="/" className="flex items-center gap-2 max-lg:justify-center max-lg:w-full">
             <Image
               alt="logo"
               src="/assets/icons/logo.svg"
@@ -79,7 +79,7 @@ function Header() {
               height={48}
               className="w-[147px] h-[48px] max-lg:w-[75px] max-lg:h-[50px]"
             />
-          </Link>
+          </Link> */}
 
           <NavigationMenu className="max-lg:hidden bg-background/[0.08] border border-background/[0.08] backdrop-blur-sm p-2 rounded-full">
             <NavigationMenuList className="flex items-center gap-4">
